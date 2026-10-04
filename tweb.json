@@ -1,0 +1,6 @@
+{
+  "stage_path": "/stage",
+  "cda_path":   "/{lang}/schematic-design-review-cda.html",
+  "learn_path": "/{lang}/AI-PCB-design-basics.html",
+  "lang": ""
+}

@@ -1,0 +1,37 @@
+; tweb - Tomachie KiCad plugin dialog strings
+; One token per line: token = string.  Same flat format as Tomachie's
+; report strings.  A translated file is this file with only the text to the
+; RIGHT of the first '=' in the target language.
+;
+; Bold heading at the top of the dialog. Shown only on first run.
+heading = One-time setup
+; Body text under the heading. Explains what the address is for.
+intro = Enter the address to receive the design's analysis report and the updated design with test points.
+; Shown under the intro. {0} is the host the files are sent to. This is the
+; notice that the design leaves the user's computer, so keep it factual.
+offsite = Pressing Analyze uploads this schematic to {0}. You choose the test options and start the analysis there.
+; Label for the email entry field.
+email = Email address
+; Label for the confirmation entry field.
+confirm_email = Confirm email address
+; Hyperlink text. Opens the agreement in the browser.
+cda_link = Read the Confidential Disclosure Agreement and Privacy Policy
+; Hyperlink text. Opens the page explaining what the analysis does.
+learn_link = New to this? See how it works
+; Button that uploads the design and opens the browser to finish.
+send = Analyze
+; Button that cancels without sending anything.
+cancel = Cancel
+; Shown under the off-site notice. Tomachie reads the files on disk, and KiCad
+; gives a plugin no way to save for the user or to detect unsaved edits.
+save_first = Save the schematic first - Tomachie analyses the file on disk, not unsaved edits.
+; Shown when KiCad's API is switched off, which is the only reason the plugin
+; can run but not reach KiCad. Name the exact menu path.
+api_disabled = KiCad's API is not enabled, so Tomachie cannot see your design. In KiCad open Preferences, then Plugins, tick "Enable KiCad API", and restart KiCad.
+; Shown at the bottom of the first-run dialog, so the user knows how to get
+; back to it later. Keep the Shift key and the icon description recognisable.
+settings_hint = You can change these settings at any time by holding Shift and clicking the Tomachie check mark icon in the KiCad tool bar.
+; Shown when the two email fields differ.
+email_mismatch = The two email addresses do not match.
+; Window title. {0} is the project name.
+title = Tomachie - submit {0}

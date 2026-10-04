@@ -1,0 +1,55 @@
+{
+  "$schema": "https://go.kicad.org/api/schemas/v1",
+  "identifier": "com.tomachie.kicad",
+  "name": "Tomachie",
+  "description": "Tomachie web client - submits the open KiCad design to tomachie.com",
+  "runtime": {
+    "type": "exec"
+  },
+  "actions": [
+    {
+      "identifier": "analyze-schematic",
+      "name": "Analyze with Tomachie",
+      "description": "Send this schematic to Tomachie for test-point insertion and design review. Shift+click to change your settings.",
+      "show-button": true,
+      "scopes": [
+        "schematic"
+      ],
+      "entrypoint": "tweb.exe",
+      "args": [
+        "--scope",
+        "schematic"
+      ],
+      "icons-light": [
+        "icon-light-24.png",
+        "icon-light-48.png"
+      ],
+      "icons-dark": [
+        "icon-dark-24.png",
+        "icon-dark-48.png"
+      ]
+    },
+    {
+      "identifier": "analyze-board",
+      "name": "Analyze with Tomachie",
+      "description": "Send this schematic to Tomachie for test-point insertion and design review. Shift+click to change your settings.",
+      "show-button": true,
+      "scopes": [
+        "pcb"
+      ],
+      "entrypoint": "tweb.exe",
+      "args": [
+        "--scope",
+        "pcb"
+      ],
+      "icons-light": [
+        "icon-light-24.png",
+        "icon-light-48.png"
+      ],
+      "icons-dark": [
+        "icon-dark-24.png",
+        "icon-dark-48.png"
+      ]
+    }
+  ]
+}

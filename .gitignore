@@ -1,0 +1,6 @@
+build/
+out/
+*.obj
+*.res
+*.pdb
+__pycache__/
