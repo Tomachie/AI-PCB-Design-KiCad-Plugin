@@ -7,7 +7,8 @@ test-point insertion, and an AI design review. The checks and
 test-point insertion are free, and so is the AI review for one-page designs.
 You choose the options in your browser, and the results are emailed to you.
 
-**Requirements:** Windows, KiCad 10.0 or later. A Linux build is planned.
+**Requirements:** Windows, KiCad 10.0 or later. On Linux, build from source
+(see below).
 
 ## Download and install — no build needed
 
@@ -65,7 +66,8 @@ it. It sends no telemetry.
 
 ## Building from source (optional)
 
-Only needed to inspect or change the code. To use the plugin, install the
+Only needed to inspect or change the code, and on Linux to install at all. To
+use the plugin on Windows, install the
 [released package](https://github.com/Tomachie/AI-PCB-Design-KiCad-Plugin/releases/latest).
 
 Visual Studio 2022 (MSVC, C++17), no other dependencies. KiCad's own `nng.dll`
@@ -90,17 +92,54 @@ tweb.exe --settings                                       open the dialog
 
 Each run is logged to `tweb_log.txt` beside `tweb.exe`.
 
+### Linux
+
+`tweb_linux.cpp` is `tweb.cpp` ported to Linux. The protocol, the sheet walk,
+the zip layout and the upload are unchanged; only the OS layer differs:
+
+| Windows | Linux |
+|---|---|
+| WinHTTP | the `curl` command line |
+| `LoadLibrary("nng.dll")` | `dlopen("libnng.so.1")` — KiCad's own library |
+| Win32 dialogs | `zenity`, falling back to the terminal |
+| `ShellExecute` | `xdg-open` |
+| `%APPDATA%` | `XDG_CONFIG_HOME`, else `~/.config` |
+
+Build and install need only `g++` and the zlib headers:
+
+```
+Fedora:  sudo dnf install gcc-c++ zlib-devel
+Debian:  sudo apt install build-essential zlib1g-dev
+
+sh build.sh                           builds out/tweb
+python make_package_linux.py 1.2.2    builds the KiCad package into build/
+```
+
+Then install `build/com.tomachie.kicad-1.2.2.zip` with Plugin and Content
+Manager → *Install from File…*, and restart KiCad. At run time the plug-in
+uses `curl`, `zenity`, `xdg-open` and KiCad's `libnng.so.1`, so those need to
+be installed (all are present on a normal Fedora desktop).
+
+One difference to the Windows build: KiCad does not pass the Shift key to a
+plug-in process, so the button cannot open the settings dialog on a click.
+Run `out/tweb --settings` in a terminal instead. The stored settings file is
+`~/.config/Tomachie/tweb_user.json`, the Linux counterpart of
+`%APPDATA%\Tomachie\tweb_user.json`.
+
 ## Files
 
 | File | Purpose |
 |---|---|
 | `tweb.cpp` | The client: KiCad API, project resolution, sheet walk, zip writer, upload, first-run dialog |
+| `tweb_linux.cpp` | The same client for Linux (see above) |
 | `string_table.h/.cpp` | Dialog strings (`i18n/tweb_<lang>.txt`) |
+| `string_table_linux.cpp` | The same strings, with the language read from the locale environment |
 | `plugin.json` | KiCad plugin manifest |
 | `tweb.json` | Paths on tomachie.com the client uses |
 | `pcm/metadata.json` | Plugin and Content Manager package description |
 | `tweb.rc`, `tweb.ico`, `icon-*.png` | Icons and version resources |
 | `build.bat`, `make_package.py` | Build the exe; build and check the KiCad package |
+| `build.sh`, `make_package_linux.py` | The same for Linux |
 | `extract_proto.py` | Extracts KiCad's protobuf descriptors from `kiapi.dll`, to re-check field numbers when KiCad changes version |
 
 ## Licence
