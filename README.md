@@ -1,8 +1,9 @@
 # Tomachie for KiCad
 
-A button in KiCad's schematic editor that sends the open design to
+A button in KiCad's schematic editor that sends the currently opened design to
 [Tomachie](https://tomachie.com) for design-for-test analysis: checks that go
-deeper than ERC, test-point insertion, and an AI design review. The checks and
+deeper than ERC (part-number-to-value checks, life-cycle checks, pull-up/dn and more), 
+test-point insertion, and an AI design review. The checks and
 test-point insertion are free, and so is the AI review for one-page designs.
 You choose the options in your browser, and the results are emailed to you.
 
