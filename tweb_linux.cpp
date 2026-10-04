@@ -1611,9 +1611,9 @@ static bool showSettings(const Strings& s, const std::string& cdaUrl,
         + s.get("save_first") + "\n\n"
         + s.get("cda_link") + ":\n" + cdaUrl + "\n\n"
         + s.get("learn_link") + ":\n" + learnUrl + "\n\n"
-        + s.get("settings_hint")
-        + "\n(On Linux, instead of Shift+click, run in a terminal:\n  "
-        + ownExePath() + " --settings )";
+        // KiCad passes no Shift key to a plugin on Linux, so the hint names
+        // the command that reopens this dialog.
+        + formatOne(s.get("linux_settings_hint"), ownExePath() + " --settings");
 
     const std::vector<std::string>& dialog = dialogCommand();
     if (!dialog.empty())

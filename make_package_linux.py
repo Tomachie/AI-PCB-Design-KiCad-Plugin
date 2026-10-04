@@ -59,7 +59,7 @@ def schema_errors(definition, document, label):
             for e in validator.iter_errors(document)]
 
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.3.0"
+version = sys.argv[1] if len(sys.argv) > 1 else "1.3.1"
 
 build = os.path.join(HERE, "build")
 stage = os.path.join(build, "stage")

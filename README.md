@@ -12,10 +12,10 @@ KiCad or the Flatpak from Flathub).
 
 ## Download and install — no build needed
 
-**[⬇ Download the latest release](https://github.com/Tomachie/AI-PCB-Design-KiCad-Plugin/releases/latest)**
-— under *Assets*, `com.tomachie.kicad-<version>.zip` for Windows or
-`com.tomachie.kicad-linux-<version>.zip` for Linux. The same packages are on
-<https://tomachie.com/en/kicad-plugin.html>.
+**[⬇ Download from tomachie.com](https://tomachie.com/en/kicad-plugin.html)**
+— `com.tomachie.kicad-<version>.zip` for Windows or
+`com.tomachie.kicad-linux-<version>.zip` for Linux. The released packages are
+published there only.
 
 1. **Do not unzip it.** KiCad installs the zip as it is.
 2. KiCad → **Plugin and Content Manager** → *Install from File…* → choose the
@@ -68,7 +68,7 @@ it. It sends no telemetry.
 ## Building from source (optional)
 
 Only needed to inspect or change the code. To use the plugin, install the
-[released package](https://github.com/Tomachie/AI-PCB-Design-KiCad-Plugin/releases/latest).
+[released package](https://tomachie.com/en/kicad-plugin.html).
 
 Visual Studio 2022 (MSVC, C++17), no other dependencies. KiCad's own `nng.dll`
 (API transport) and `zlib1.dll` (zip compression) are loaded at run time.
@@ -113,7 +113,7 @@ Fedora:         sudo dnf install gcc-c++ zlib-devel python3-jsonschema
 Debian/Ubuntu:  sudo apt install build-essential zlib1g-dev python3-jsonschema
 
 sh build.sh                            builds out/tweb
-python3 make_package_linux.py 1.3.0    builds the KiCad package into build/
+python3 make_package_linux.py 1.3.1    builds the KiCad package into build/
 ```
 
 The package script finds KiCad's schema in a distribution install or in a
@@ -127,7 +127,7 @@ Then, in KiCad:
    ![Enable KiCad API](docs/images/linux-1-enable-api.png)
 
 2. Plugin and Content Manager → **Install from File…** →
-   `build/com.tomachie.kicad-linux-1.3.0.zip`, and restart KiCad.
+   `build/com.tomachie.kicad-linux-1.3.1.zip`, and restart KiCad.
 
    ![Install from File](docs/images/linux-2-install-from-file.png)
 

@@ -117,7 +117,7 @@ if len(sys.argv) > 2 and sys.argv[1] == "--linux":
     add_linux(sys.argv[2])
     sys.exit(0)
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.2.0"
+version = sys.argv[1] if len(sys.argv) > 1 else "1.3.1"
 base_url = sys.argv[2] if len(sys.argv) > 2 else "https://tomachie.com/kicad"
 
 stage = os.path.join(build, "stage")
