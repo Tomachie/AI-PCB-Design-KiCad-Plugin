@@ -1,6 +1,11 @@
 # Builds the KiCad PCM package for tweb, and the three files needed to host it.
 #
 #     python make_package.py [version] [base_url]
+#     python make_package.py --linux <linux package zip>
+#
+# The second form adds the Linux package (built on Linux by
+# make_package_linux.py) to the listing already in build/, as a second
+# version entry with platforms ["linux"]; the Windows package is not rebuilt.
 #
 # Every change to the package's content gets a new version number: two
 # different files both named ...-1.1.0.zip cannot be told apart in a Downloads
@@ -53,10 +58,68 @@ def schema_errors(definition, document, label):
             for e in validator.iter_errors(document)]
 
 
+build = os.path.join(HERE, "build")
+
+
+def stamp(path, base_url):
+    data = open(path, "rb").read()
+    now = int(time.time())
+    return {"url": "%s/%s" % (base_url, os.path.basename(path)),
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "update_timestamp": now,
+            "update_time_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(now))}
+
+
+def add_linux(linux_zip):
+    """Adds the Linux package (make_package_linux.py, built on Linux) to the
+    hosting files already in build/, leaving the Windows package untouched."""
+    packages_path = os.path.join(build, "packages.json")
+    repository_path = os.path.join(build, "repository.json")
+    if not os.path.exists(packages_path):
+        sys.exit("build/packages.json not found - build the Windows package first")
+    repository = json.load(open(repository_path, encoding="utf-8"))
+    base_url = repository["packages"]["url"].rsplit("/", 1)[0]
+    with zipfile.ZipFile(linux_zip) as z:
+        entry = json.loads(z.read("metadata.json"))["versions"][0]
+        install_size = sum(i.file_size for i in z.infolist())
+    if entry.get("platforms") != ["linux"]:
+        sys.exit("not a Linux package (platforms %s): %s" % (entry.get("platforms"), linux_zip))
+    blob = open(linux_zip, "rb").read()
+    name = os.path.basename(linux_zip)
+    entry["download_url"] = "%s/%s" % (base_url, name)
+    entry["download_sha256"] = hashlib.sha256(blob).hexdigest()
+    entry["download_size"] = len(blob)
+    entry["install_size"] = install_size
+    listing = json.load(open(packages_path, encoding="utf-8"))
+    package = listing["packages"][0]
+    package["versions"] = [v for v in package["versions"]
+                           if v.get("platforms") != ["linux"]] + [entry]
+    problems = schema_errors("PackageArray", listing, "packages.json")
+    if problems:
+        sys.exit("KiCad would refuse packages.json - nothing changed:\n  " + "\n  ".join(problems))
+    for old in os.listdir(build):
+        if old.startswith(package["identifier"] + "-linux-") and old != name:
+            os.remove(os.path.join(build, old))
+    shutil.copy(linux_zip, os.path.join(build, name))
+    json.dump(listing, open(packages_path, "w", encoding="utf-8"), indent=2)
+    repository["packages"] = stamp(packages_path, base_url)
+    problems = schema_errors("Repository", repository, "repository.json")
+    if problems:
+        sys.exit("KiCad would refuse repository.json:\n  " + "\n  ".join(problems))
+    json.dump(repository, open(repository_path, "w", encoding="utf-8"), indent=2)
+    for v in package["versions"]:
+        print("listed       : %s %s  %s" % (v["version"], ",".join(v["platforms"]), v["download_url"]))
+    print("host these   : everything in build/")
+
+
+#     python make_package.py --linux <com.tomachie.kicad-linux-X.Y.Z.zip>
+if len(sys.argv) > 2 and sys.argv[1] == "--linux":
+    add_linux(sys.argv[2])
+    sys.exit(0)
+
 version = sys.argv[1] if len(sys.argv) > 1 else "1.2.0"
 base_url = sys.argv[2] if len(sys.argv) > 2 else "https://tomachie.com/kicad"
 
-build = os.path.join(HERE, "build")
 stage = os.path.join(build, "stage")
 if os.path.isdir(build):
     shutil.rmtree(build)
@@ -122,15 +185,6 @@ with zipfile.ZipFile(resources_path, "w", zipfile.ZIP_DEFLATED) as z:
             "%s/icon.png" % meta["identifier"])
 
 
-def stamp(path):
-    data = open(path, "rb").read()
-    now = int(time.time())
-    return {"url": "%s/%s" % (base_url, os.path.basename(path)),
-            "sha256": hashlib.sha256(data).hexdigest(),
-            "update_timestamp": now,
-            "update_time_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(now))}
-
-
 # schema_version 2 is what makes KiCad check packages.json against its v2
 # schema. Without it KiCad assumes v1, whose licence list is a closed enum of
 # open-source licences and refuses "proprietary".
@@ -139,8 +193,8 @@ repository = {
     "schema_version": 2,
     "name": meta["name"],
     "maintainer": meta["author"],
-    "packages": stamp(packages_path),
-    "resources": stamp(resources_path),
+    "packages": stamp(packages_path, base_url),
+    "resources": stamp(resources_path, base_url),
 }
 json.dump(repository, open(os.path.join(build, "repository.json"), "w", encoding="utf-8"),
           indent=2)

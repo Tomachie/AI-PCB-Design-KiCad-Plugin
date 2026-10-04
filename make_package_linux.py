@@ -5,7 +5,7 @@
 #
 # Inputs  : out/tweb (from build.sh), plugin.json, tweb.json, LICENSE,
 #           icons, i18n/, pcm/icon.png, pcm/metadata.json
-# Outputs : build/<identifier>-<version>.zip   the package
+# Outputs : build/<identifier>-linux-<version>.zip   the package
 #           (Install from File in KiCad's Plugin and Content Manager)
 #
 # The package archive contains:
@@ -59,7 +59,7 @@ def schema_errors(definition, document, label):
             for e in validator.iter_errors(document)]
 
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.2.3"
+version = sys.argv[1] if len(sys.argv) > 1 else "1.3.0"
 
 build = os.path.join(HERE, "build")
 stage = os.path.join(build, "stage")
@@ -101,7 +101,7 @@ if problems:
 json.dump(meta, open(os.path.join(stage, "metadata.json"), "w", encoding="utf-8"), indent=2)
 
 # --- the archive ------------------------------------------------------------
-pkg_name = "%s-%s.zip" % (meta["identifier"], version)
+pkg_name = "%s-linux-%s.zip" % (meta["identifier"], version)
 pkg_path = os.path.join(build, pkg_name)
 install_size = 0
 with zipfile.ZipFile(pkg_path, "w", zipfile.ZIP_DEFLATED) as z:
