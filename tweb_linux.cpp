@@ -5,7 +5,8 @@
 // layout, same /stage multipart upload. Only the OS layer differs:
 //   - WinHTTP        -> curl CLI subprocess (no extra dev packages needed)
 //   - LoadLibrary    -> dlopen("libnng.so.1") / direct -lz link
-//   - Win32 dialog   -> zenity forms, console fallback
+//   - Win32 dialog   -> zenity forms; GTK through python3 where zenity is
+//                       absent (KiCad's Flatpak); console when neither
 //   - ShellExecute   -> xdg-open
 //   - APPDATA/TEMP   -> XDG_CONFIG_HOME / TMPDIR
 //   - GetAsyncKeyState(Shift) is unavailable to a Linux plugin process:
@@ -110,6 +111,71 @@ static bool haveProg(const char* name)
     return system(cmd.c_str()) == 0;
 }
 
+static int runCapture(const std::vector<std::string>& args, const std::string& stdinData,
+                      std::string& output, bool includeStderr = false);
+
+// The subset of zenity this client uses (--info/--warning/--error, --forms
+// with --add-entry, --title, --text, --ok-label, --cancel-label), drawn with
+// GTK 3 through Python.  KiCad's Flatpak sandbox has python3 with GTK but no
+// zenity, so without this the first-run dialog could never appear there.
+// Same arguments, same output (form fields joined by '|'), same exit codes.
+static const char* GTK_DIALOG_PY = R"PY(
+import sys, gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+a = sys.argv[1:]; o = {}; entries = []; kind = "info"; i = 0
+while i < len(a):
+    s = a[i]; i += 1
+    if s in ("--info", "--warning", "--error", "--forms"):
+        kind = s[2:]
+    elif s == "--text" and i < len(a):
+        o["text"] = a[i]; i += 1
+    elif s.startswith("--add-entry="):
+        entries.append(s[len("--add-entry="):])
+    elif s.startswith("--") and "=" in s:
+        n, v = s[2:].split("=", 1); o[n] = v
+if kind == "forms":
+    d = Gtk.Dialog(title=o.get("title", ""))
+    d.add_button(o.get("cancel-label", "Cancel"), Gtk.ResponseType.CANCEL)
+    d.add_button(o.get("ok-label", "OK"), Gtk.ResponseType.OK)
+    box = d.get_content_area(); box.set_spacing(8); box.set_border_width(12)
+    t = Gtk.Label(label=o.get("text", "")); t.set_line_wrap(True)
+    t.set_max_width_chars(100); t.set_selectable(True); t.set_xalign(0); box.add(t)
+    d.set_resizable(False)
+    fields = []
+    for e in entries:
+        box.add(Gtk.Label(label=e, xalign=0))
+        f = Gtk.Entry(); f.set_activates_default(True); box.add(f); fields.append(f)
+    d.set_default_response(Gtk.ResponseType.OK); d.show_all()
+    if fields: fields[0].grab_focus()
+    if d.run() != Gtk.ResponseType.OK: sys.exit(1)
+    print("|".join(f.get_text() for f in fields)); sys.exit(0)
+types = {"info": Gtk.MessageType.INFO, "warning": Gtk.MessageType.WARNING,
+         "error": Gtk.MessageType.ERROR}
+d = Gtk.MessageDialog(message_type=types.get(kind, Gtk.MessageType.INFO),
+                      buttons=Gtk.ButtonsType.OK, text=o.get("text", ""))
+d.set_title(o.get("title", "")); d.run(); sys.exit(0)
+)PY";
+
+// The program that draws dialogs, as the start of an argv: zenity, else the
+// GTK script above, else empty (no display, or neither is available).
+static const std::vector<std::string>& dialogCommand()
+{
+    static bool done = false;
+    static std::vector<std::string> cmd;
+    if (done)
+        return cmd;
+    done = true;
+    if (!guiAvailable())
+        return cmd;
+    if (haveProg("zenity"))
+        cmd = { "zenity" };
+    else if (system("python3 -c 'import gi; gi.require_version(\"Gtk\", \"3.0\");"
+                    " from gi.repository import Gtk' >/dev/null 2>&1") == 0)
+        cmd = { "python3", "-c", GTK_DIALOG_PY };
+    return cmd;
+}
+
 // Best-effort GUI/console notice. Always logged; the success report only
 // shows with --verbose (same policy as the Windows build).
 static void finish(const std::string& text, int icon)
@@ -117,31 +183,19 @@ static void finish(const std::string& text, int icon)
     logLine("RESULT:\n" + text + "\n----");
     if (icon == ICON_INFO && !g_verbose)
         return;
-    if (guiAvailable() && haveProg("zenity"))
+    std::vector<std::string> args = dialogCommand();
+    if (!args.empty())
     {
-        const char* kind = (icon == ICON_ERROR) ? "--error" : (icon == ICON_WARNING) ? "--warning" : "--info";
-        // Fork so a closed stdin (KiCad-launched) cannot block us.
-        pid_t pid = fork();
-        if (pid == 0)
-        {
-            int devnull = open("/dev/null", O_RDONLY);
-            if (devnull >= 0)
-            {
-                dup2(devnull, STDIN_FILENO);
-                close(devnull);
-            }
-            execlp("zenity", "zenity", kind, "--title=Tomachie",
-                   "--no-wrap", "--text", text.c_str(), (char*)NULL);
-            _exit(127);
-        }
-        else if (pid > 0)
-        {
-            int st = 0;
-            // Do not hang the plugin on a dialog: zenity returns when the
-            // user dismisses it, which is the same contract as MessageBox.
-            while (waitpid(pid, &st, 0) < 0 && errno == EINTR) {}
-            return;
-        }
+        // Returns when the user dismisses it, the same contract as MessageBox.
+        // runCapture gives the dialog /dev/null as stdin.
+        args.push_back((icon == ICON_ERROR) ? "--error" : (icon == ICON_WARNING) ? "--warning" : "--info");
+        args.push_back("--title=Tomachie");
+        args.push_back("--no-wrap");
+        args.push_back("--text");
+        args.push_back(text);
+        std::string ignored;
+        runCapture(args, std::string(), ignored);
+        return;
     }
     fprintf(stderr, "Tomachie: %s\n", text.c_str());
 }
@@ -1257,7 +1311,7 @@ static std::string withLang(std::string url, const std::string& code)
 // Returns the exit code; output holds stdout (stderr discarded unless
 // includeStderr, in which case it is appended after stdout).
 static int runCapture(const std::vector<std::string>& args, const std::string& stdinData,
-                      std::string& output, bool includeStderr = false)
+                      std::string& output, bool includeStderr)
 {
     int outPipe[2], inPipe[2];
     if (pipe(outPipe) != 0)
@@ -1384,14 +1438,15 @@ static std::string stageArchive(const Config& cfg, const std::string& zipPath,
     args.push_back("150");
     args.push_back("-X");
     args.push_back("POST");
+    // --form-string: with -F a value starting with '@' or '<' is read as a file.
     if (!email.empty())
     {
-        args.push_back("-F");
+        args.push_back("--form-string");
         args.push_back("email=" + email);
     }
     if (!lang.empty())
     {
-        args.push_back("-F");
+        args.push_back("--form-string");
         args.push_back("lang=" + lang);
     }
     args.push_back("-F");
@@ -1499,7 +1554,13 @@ static int stageOnly(int argc, char** argv)
 // button just uploads; --settings reopens it to change the address.
 static std::string settingsPath()
 {
+    // Inside KiCad's Flatpak, XDG_CONFIG_HOME is the sandbox's own folder
+    // (~/.var/app/org.kicad.KiCad/config), which `tweb --settings` run from a
+    // terminal never sees.  The sandbox can read the home folder, so the file
+    // stays in ~/.config either way: one settings file per user.
     std::string base = configBase();
+    if (!envStr("FLATPAK_ID").empty() && !envStr("HOME").empty())
+        base = envStr("HOME") + "/.config";
     if (base.empty())
         return std::string();
     std::string dir = base + "/Tomachie";
@@ -1551,12 +1612,13 @@ static bool showSettings(const Strings& s, const std::string& cdaUrl,
         + s.get("cda_link") + ":\n" + cdaUrl + "\n\n"
         + s.get("learn_link") + ":\n" + learnUrl + "\n\n"
         + s.get("settings_hint")
-        + "\n(On Linux, re-run `tweb --settings` instead of Shift+click.)";
+        + "\n(On Linux, instead of Shift+click, run in a terminal:\n  "
+        + ownExePath() + " --settings )";
 
-    if (guiAvailable() && haveProg("zenity"))
+    const std::vector<std::string>& dialog = dialogCommand();
+    if (!dialog.empty())
     {
-        std::vector<std::string> args;
-        args.push_back("zenity");
+        std::vector<std::string> args = dialog;
         args.push_back("--forms");
         args.push_back("--title=" + title);
         args.push_back("--text=" + body);
@@ -1576,8 +1638,7 @@ static bool showSettings(const Strings& s, const std::string& cdaUrl,
         std::string b = (bar == std::string::npos) ? std::string() : out.substr(bar + 1);
         if (a != b)
         {
-            std::vector<std::string> w;
-            w.push_back("zenity");
+            std::vector<std::string> w = dialog;
             w.push_back("--warning");
             w.push_back("--title=Tomachie");
             w.push_back("--text=" + s.get("email_mismatch"));

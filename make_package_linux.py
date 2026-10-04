@@ -36,10 +36,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 UPSTREAM = HERE
 BIN = os.path.join(HERE, "out", "tweb")
 
-PCM_SCHEMA = "/usr/share/kicad/schemas/pcm.v2.schema.json"
-
-if not os.path.exists(PCM_SCHEMA):
-    sys.exit("KiCad's package schema not found (is KiCad 10 installed?):\n  " + PCM_SCHEMA)
+# KiCad's own copy: a distribution package, a system-wide Flatpak, or a
+# per-user Flatpak.
+SCHEMA_LOCATIONS = [
+    "/usr/share/kicad/schemas/pcm.v2.schema.json",
+    "/var/lib/flatpak/app/org.kicad.KiCad/current/active/files/share/kicad/schemas/pcm.v2.schema.json",
+    os.path.expanduser("~/.local/share/flatpak/app/org.kicad.KiCad/current/active/files/share/kicad/schemas/pcm.v2.schema.json"),
+]
+found = [p for p in SCHEMA_LOCATIONS if os.path.exists(p)]
+if not found:
+    sys.exit("KiCad's package schema not found (is KiCad 10 installed?). Looked in:\n  "
+             + "\n  ".join(SCHEMA_LOCATIONS))
+PCM_SCHEMA = found[0]
 pcm_schema = json.load(open(PCM_SCHEMA, encoding="utf-8"))
 
 
@@ -51,7 +59,7 @@ def schema_errors(definition, document, label):
             for e in validator.iter_errors(document)]
 
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.2.2"
+version = sys.argv[1] if len(sys.argv) > 1 else "1.2.3"
 
 build = os.path.join(HERE, "build")
 stage = os.path.join(build, "stage")
@@ -67,7 +75,11 @@ if not os.path.exists(BIN):
 shutil.copy(BIN, os.path.join(stage, "plugins", "tweb"))
 os.chmod(os.path.join(stage, "plugins", "tweb"), 0o755)
 shutil.copy(os.path.join(UPSTREAM, "tweb.json"), os.path.join(stage, "plugins", "tweb.json"))
-shutil.copy(os.path.join(HERE, "plugin.json"), os.path.join(stage, "plugins", "plugin.json"))
+# plugin.json is shared with Windows, where the program is tweb.exe.
+plugin = json.load(open(os.path.join(HERE, "plugin.json"), encoding="utf-8"))
+for action in plugin["actions"]:
+    action["entrypoint"] = "tweb"
+json.dump(plugin, open(os.path.join(stage, "plugins", "plugin.json"), "w", encoding="utf-8"), indent=2)
 shutil.copy(os.path.join(UPSTREAM, "LICENSE"), os.path.join(stage, "plugins", "LICENSE"))
 for f in ("icon-light-24.png", "icon-light-48.png",
           "icon-dark-24.png", "icon-dark-48.png"):

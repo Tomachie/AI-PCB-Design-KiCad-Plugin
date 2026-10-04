@@ -101,30 +101,61 @@ the zip layout and the upload are unchanged; only the OS layer differs:
 |---|---|
 | WinHTTP | the `curl` command line |
 | `LoadLibrary("nng.dll")` | `dlopen("libnng.so.1")` — KiCad's own library |
-| Win32 dialogs | `zenity`, falling back to the terminal |
+| Win32 dialogs | `zenity`; GTK through `python3` where there is no `zenity` (KiCad's Flatpak); the terminal when neither |
 | `ShellExecute` | `xdg-open` |
-| `%APPDATA%` | `XDG_CONFIG_HOME`, else `~/.config` |
+| `%APPDATA%` | `~/.config` (`XDG_CONFIG_HOME` outside a Flatpak) |
 
-Build and install need only `g++` and the zlib headers:
+Build and install need only `g++`, the zlib headers and, to check the package
+against KiCad's schema, Python's `jsonschema`:
 
 ```
-Fedora:  sudo dnf install gcc-c++ zlib-devel
-Debian:  sudo apt install build-essential zlib1g-dev
+Fedora:         sudo dnf install gcc-c++ zlib-devel python3-jsonschema
+Debian/Ubuntu:  sudo apt install build-essential zlib1g-dev python3-jsonschema
 
-sh build.sh                           builds out/tweb
-python make_package_linux.py 1.2.2    builds the KiCad package into build/
+sh build.sh                            builds out/tweb
+python3 make_package_linux.py 1.2.3    builds the KiCad package into build/
 ```
 
-Then install `build/com.tomachie.kicad-1.2.2.zip` with Plugin and Content
-Manager → *Install from File…*, and restart KiCad. At run time the plug-in
-uses `curl`, `zenity`, `xdg-open` and KiCad's `libnng.so.1`, so those need to
-be installed (all are present on a normal Fedora desktop).
+The package script finds KiCad's schema in a distribution install or in a
+KiCad Flatpak (system-wide or per-user). Tested on Fedora (g++ 16.2, KiCad
+10.0.6) and on Ubuntu 20.04 (g++ 9.4, KiCad 10.0.6 from Flathub).
+
+Then, in KiCad:
+
+1. Preferences → Plugins → tick **Enable KiCad API**, and restart KiCad.
+
+   ![Enable KiCad API](docs/images/linux-1-enable-api.png)
+
+2. Plugin and Content Manager → **Install from File…** →
+   `build/com.tomachie.kicad-1.2.3.zip`, and restart KiCad.
+
+   ![Install from File](docs/images/linux-2-install-from-file.png)
+
+3. The Tomachie check mark is at the right-hand end of the schematic editor's
+   toolbar.
+
+   ![Tomachie button](docs/images/linux-3-toolbar-button.png)
+
+4. The first click asks once for the email address and shows where the design
+   goes.
+
+   ![First-run dialog](docs/images/linux-4-first-run.png)
+
+5. The browser opens tomachie.com with the design staged. Nothing is analysed
+   until Analyze is pressed there.
+
+   ![Staged design](docs/images/linux-5-staged-page.png)
+
+At run time the plug-in uses `curl`, `xdg-open`, KiCad's `libnng.so.1`, and
+`zenity` or Python's GTK for the dialogs. A normal desktop has them, and so
+does KiCad's Flatpak (which has Python's GTK instead of `zenity`).
 
 One difference to the Windows build: KiCad does not pass the Shift key to a
 plug-in process, so the button cannot open the settings dialog on a click.
-Run `out/tweb --settings` in a terminal instead. The stored settings file is
+Run `tweb --settings` in a terminal instead; the first-run dialog shows the
+full path of the installed `tweb`. The stored settings file is
 `~/.config/Tomachie/tweb_user.json`, the Linux counterpart of
-`%APPDATA%\Tomachie\tweb_user.json`.
+`%APPDATA%\Tomachie\tweb_user.json`, also when KiCad runs as a Flatpak.
 
 ## Files
 
