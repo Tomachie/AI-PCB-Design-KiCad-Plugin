@@ -9,16 +9,24 @@ You choose the options in your browser, and the results are emailed to you.
 
 **Requirements:** Windows, KiCad 10.0 or later. A Linux build is planned.
 
-## Install
+## Download and install — no build needed
 
-Through KiCad's **Plugin and Content Manager**:
+**[⬇ Download the latest release](https://github.com/Tomachie/AI-PCB-Design-KiCad-Plugin/releases/latest)**
+— the file `com.tomachie.kicad-<version>.zip` under *Assets*. The same package
+is on <https://tomachie.com/en/kicad-plugin.html>.
 
-- **Install from File:** download the package from
-  <https://tomachie.com/en/kicad-plugin.html>, then Plugin and Content Manager
-  → *Install from File…* → choose the zip (do not unzip it) → restart KiCad.
-- **Or add our repository**, which brings updates automatically: Plugin and
-  Content Manager → *Manage…* → add `https://tomachie.com/kicad/repository.json`
-  → install **Tomachie**.
+1. **Do not unzip it.** KiCad installs the zip as it is.
+2. KiCad → **Plugin and Content Manager** → *Install from File…* → choose the
+   zip.
+3. Restart KiCad.
+
+**Or add our repository**, which brings updates automatically: Plugin and
+Content Manager → *Manage…* → add `https://tomachie.com/kicad/repository.json`
+→ install **Tomachie**.
+
+Use the released package rather than building your own: it is the build the
+Tomachie service is tested against, and KiCad updates it for you through the
+repository.
 
 The plugin uses the KiCad API. If Preferences → Plugins → *Enable KiCad API*
 is off, KiCad offers to switch it on when the plugin is installed. While it is
@@ -55,7 +63,10 @@ The plugin stores one file of its own, `%APPDATA%\Tomachie\tweb_user.json`,
 holding the email address. Hold **Shift** while clicking the button to change
 it. It sends no telemetry.
 
-## Build
+## Building from source (optional)
+
+Only needed to inspect or change the code. To use the plugin, install the
+[released package](https://github.com/Tomachie/AI-PCB-Design-KiCad-Plugin/releases/latest).
 
 Visual Studio 2022 (MSVC, C++17), no other dependencies. KiCad's own `nng.dll`
 (API transport) and `zlib1.dll` (zip compression) are loaded at run time.
