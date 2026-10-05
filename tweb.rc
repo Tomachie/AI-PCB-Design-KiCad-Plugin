@@ -1,14 +1,15 @@
 // tweb resources.  The icon is embedded so the dialog, the taskbar and the
 // file itself all carry the Tomachie mark with no external file to lose.
 #include <windows.h>
+#include "version.h"
 
 #define IDI_TWEB 1
 
 IDI_TWEB ICON "tweb.ico"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION    1,3,1,0
- PRODUCTVERSION 1,3,1,0
+ FILEVERSION    TWEB_VERSION_MAJOR,TWEB_VERSION_MINOR,TWEB_VERSION_PATCH,0
+ PRODUCTVERSION TWEB_VERSION_MAJOR,TWEB_VERSION_MINOR,TWEB_VERSION_PATCH,0
  FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
  FILEFLAGS      0
  FILEOS         VOS_NT_WINDOWS32
@@ -21,12 +22,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "Tomachie LLC"
             VALUE "FileDescription",  "Tomachie web client for KiCad"
-            VALUE "FileVersion",      "1.3.1.0"
+            VALUE "FileVersion",      TWEB_VERSION
             VALUE "InternalName",     "tweb"
             VALUE "LegalCopyright",   "Copyright (c) 2026 Tomachie LLC. MIT License."
             VALUE "OriginalFilename", "tweb.exe"
             VALUE "ProductName",      "Tomachie"
-            VALUE "ProductVersion",   "1.3.1.0"
+            VALUE "ProductVersion",   TWEB_VERSION
         END
     END
     BLOCK "VarFileInfo"

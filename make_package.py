@@ -1,6 +1,6 @@
 # Builds the KiCad PCM package for tweb, and the three files needed to host it.
 #
-#     python make_package.py [version] [base_url]
+#     python make_package.py [base_url]        (version: version.h)
 #     python make_package.py --linux <linux package zip>
 #
 # The second form adds the Linux package (built on Linux by
@@ -26,12 +26,23 @@ import copy
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import time
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def plugin_version():
+    """TWEB_VERSION from version.h - the one place the version is set."""
+    m = re.search(r'#define\s+TWEB_VERSION\s+"([0-9.]+)"',
+                  open(os.path.join(HERE, "version.h"), encoding="utf-8").read())
+    if not m:
+        sys.exit("version.h has no TWEB_VERSION")
+    return m.group(1)
+
 EXE = os.path.join(HERE, "out", "tweb.exe")
 
 # The schema KiCad itself checks a package against, shipped with KiCad. Every
@@ -117,8 +128,8 @@ if len(sys.argv) > 2 and sys.argv[1] == "--linux":
     add_linux(sys.argv[2])
     sys.exit(0)
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.3.1"
-base_url = sys.argv[2] if len(sys.argv) > 2 else "https://tomachie.com/kicad"
+version = plugin_version()
+base_url = sys.argv[1] if len(sys.argv) > 1 else "https://tomachie.com/kicad"
 
 stage = os.path.join(build, "stage")
 if os.path.isdir(build):
@@ -147,6 +158,11 @@ shutil.copy(os.path.join(HERE, "pcm", "icon.png"),
 
 meta = json.load(open(os.path.join(HERE, "pcm", "metadata.json"), encoding="utf-8"))
 meta["versions"][0]["version"] = version
+# The address goes into the package's own metadata too: a package installed
+# from a file keeps only this copy, and KiCad's Download button in the
+# Installed tab reads its download_url ("Package download url is not specified").
+pkg_name = "%s-%s.zip" % (meta["identifier"], version)
+meta["versions"][0]["download_url"] = "%s/%s" % (base_url, pkg_name)
 problems = schema_errors("Package", meta, "pcm/metadata.json")
 if problems:
     shutil.rmtree(build)

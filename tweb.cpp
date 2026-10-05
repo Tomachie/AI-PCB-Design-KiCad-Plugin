@@ -32,6 +32,11 @@
 #include <sstream>
 
 #include "string_table.h"
+#include "version.h"
+
+#define TWEB_WIDEN2(s) L##s
+#define TWEB_WIDEN(s)  TWEB_WIDEN2(s)
+#define TWEB_VERSION_W TWEB_WIDEN(TWEB_VERSION)
 
 static const char* LOG_NAME = "tweb_log.txt";
 
@@ -1725,7 +1730,7 @@ static bool showSettings(const Strings& s, const std::wstring& cdaUrl,
     sf.lfHeight = LONG(sf.lfHeight * 0.85);
     HFONT smallFont = CreateFontIndirectW(&sf);
     st.smallFont = smallFont;
-    mk(L"STATIC", L"Tweb (c) 2026 Tomachie LLC.  MIT License.", 0,
+    mk(L"STATIC", L"Tweb " TWEB_VERSION_W L"  (c) 2026 Tomachie LLC.  MIT License.", 0,
        16, 404, W - 60, 16, h, 106, smallFont);
 
     // KiCad launches plugins with a STARTUPINFO show-state, and Windows makes

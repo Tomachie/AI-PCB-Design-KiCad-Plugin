@@ -39,6 +39,7 @@
 #include <zlib.h>
 
 #include "string_table.h"
+#include "version.h"
 
 namespace fs = std::filesystem;
 
@@ -1613,7 +1614,8 @@ static bool showSettings(const Strings& s, const std::string& cdaUrl,
         + s.get("learn_link") + ":\n" + learnUrl + "\n\n"
         // KiCad passes no Shift key to a plugin on Linux, so the hint names
         // the command that reopens this dialog.
-        + formatOne(s.get("linux_settings_hint"), ownExePath() + " --settings");
+        + formatOne(s.get("linux_settings_hint"), ownExePath() + " --settings")
+        + "\n\nTweb " TWEB_VERSION "  (c) 2026 Tomachie LLC.  MIT License.";
 
     const std::vector<std::string>& dialog = dialogCommand();
     if (!dialog.empty())

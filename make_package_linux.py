@@ -1,7 +1,7 @@
 # Builds the KiCad PCM package for the Linux tweb port.
 #
 #     sh build.sh
-#     python make_package_linux.py [version]
+#     python make_package_linux.py             (version: version.h)
 #
 # Inputs  : out/tweb (from build.sh), plugin.json, tweb.json, LICENSE,
 #           icons, i18n/, pcm/icon.png, pcm/metadata.json
@@ -22,6 +22,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import zipfile
@@ -33,6 +34,16 @@ except ImportError:
              "  python -m pip install --user jsonschema")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def plugin_version():
+    """TWEB_VERSION from version.h - the one place the version is set."""
+    m = re.search(r'#define\s+TWEB_VERSION\s+"([0-9.]+)"',
+                  open(os.path.join(HERE, "version.h"), encoding="utf-8").read())
+    if not m:
+        sys.exit("version.h has no TWEB_VERSION")
+    return m.group(1)
+
 UPSTREAM = HERE
 BIN = os.path.join(HERE, "out", "tweb")
 
@@ -59,7 +70,7 @@ def schema_errors(definition, document, label):
             for e in validator.iter_errors(document)]
 
 
-version = sys.argv[1] if len(sys.argv) > 1 else "1.3.1"
+version = plugin_version()
 
 build = os.path.join(HERE, "build")
 stage = os.path.join(build, "stage")
@@ -94,6 +105,10 @@ shutil.copy(os.path.join(UPSTREAM, "pcm", "icon.png"),
 meta = json.load(open(os.path.join(UPSTREAM, "pcm", "metadata.json"), encoding="utf-8"))
 meta["versions"][0]["version"] = version
 meta["versions"][0]["platforms"] = ["linux"]
+# The package's own copy carries its address: a package installed from a file
+# keeps only this metadata, and KiCad's Download button reads download_url.
+meta["versions"][0]["download_url"] = "https://tomachie.com/kicad/%s-linux-%s.zip" % (
+    meta["identifier"], version)
 problems = schema_errors("Package", meta, "pcm/metadata.json")
 if problems:
     shutil.rmtree(build)

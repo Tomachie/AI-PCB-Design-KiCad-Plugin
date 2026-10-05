@@ -108,7 +108,7 @@ Fedora:         sudo dnf install gcc-c++ zlib-devel python3-jsonschema
 Debian/Ubuntu:  sudo apt install build-essential zlib1g-dev python3-jsonschema
 
 sh build.sh                            builds out/tweb
-python3 make_package_linux.py 1.3.1    builds the KiCad package into build/
+python3 make_package_linux.py          builds the KiCad package into build/ (version: version.h)
 ```
 
 The package script finds KiCad's schema in a distribution install or in a
@@ -122,7 +122,7 @@ Then, in KiCad:
    ![Enable KiCad API](docs/images/linux-1-enable-api.png)
 
 2. Plugin and Content Manager → **Install from File…** →
-   `build/com.tomachie.kicad-linux-1.3.1.zip`, and restart KiCad.
+   `build/com.tomachie.kicad-linux-<version>.zip`, and restart KiCad.
 
    ![Install from File](docs/images/linux-2-install-from-file.png)
 
@@ -160,6 +160,7 @@ full path of the installed `tweb`. The stored settings file is
 | `tweb_linux.cpp` | The same client for Linux (see above) |
 | `string_table.h/.cpp` | Dialog strings (`i18n/tweb_<lang>.txt`) |
 | `string_table_linux.cpp` | The same strings, with the language read from the locale environment |
+| `version.h` | The plugin's version number, used by the program, its file properties and both package scripts |
 | `plugin.json` | KiCad plugin manifest |
 | `tweb.json` | Paths on tomachie.com the client uses |
 | `pcm/metadata.json` | Plugin and Content Manager package description |
