@@ -22,13 +22,8 @@ published there only.
    zip.
 3. Restart KiCad.
 
-**Or add our repository**, which brings updates automatically: Plugin and
-Content Manager → *Manage…* → add `https://tomachie.com/kicad/repository.json`
-→ install **Tomachie**.
-
 Use the released package rather than building your own: it is the build the
-Tomachie service is tested against, and KiCad updates it for you through the
-repository.
+Tomachie service is tested against.
 
 The plugin uses the KiCad API. If Preferences → Plugins → *Enable KiCad API*
 is off, KiCad offers to switch it on when the plugin is installed. While it is
