@@ -1,11 +1,43 @@
-# Tomachie for KiCad
+# Tomachie for KiCad — AI schematic design review
 
-A button in KiCad's schematic editor that sends the currently opened design to
-[Tomachie](https://tomachie.com) for design-for-test analysis: checks that go
-deeper than ERC (part-number-to-value checks, life-cycle checks, pull-up/dn and more), 
-test-point insertion, and an AI design review. The checks and
-test-point insertion are free, and so is the AI review for one-page designs.
-You choose the options in your browser, and the results are emailed to you.
+An AI design-review plugin for KiCad. A button in the schematic editor sends
+the open design to [Tomachie](https://tomachie.com), where a large language
+model (LLM) reviews the schematic against the parts' datasheets and reports
+functional design errors. The same run performs the schematic checks,
+Design-for-Test analysis and test-point insertion listed below. You choose the
+options in your browser, and the results are emailed to you.
+
+## Free
+
+1. **Part number checks against the schematic** — passive values, with voltage
+   and current ratings checked against the decoded part number.
+2. **Pull-up / pull-down checks.**
+3. **I2C address identification and checks.**
+4. **Power rail source-to-destination pathing** through jumpers, solder
+   bridges and passives.
+5. **Low-speed serial interface identification** — SPI, JTAG, I2C, I2S and
+   others.
+6. **High-speed serial interface impedance checks** — continuity of impedance
+   along the path, through passives.
+7. **Design-for-Test fault coverage** across AXI, AOI, ICT/FPT and boundary
+   scan.
+8. **Test-point insertion** based on the fault coverage, with the modified
+   design available for download.
+9. **Traffic-light fault coverage markup** of the schematic using PCOLA-SOQ.
+
+## AI design review — free for one-page designs, from $10 for larger designs
+
+10. **AI design review using datasheets** — an LLM reads each part's datasheet
+    and reviews the circuit against it. The review is ordered by section.
+
+## Included with any paid run (at least one paid section)
+
+11. **DC power integrity.**
+12. **pdn.json** — detailed power-delivery data from the design, for use with
+    KiPI PDN analysis.
+13. **Linux / Zephyr Device Tree Overlay (.dtso)** when a processor is present.
+14. **EDIF netlist and a correct BOM by variant.**
+15. **Auto-generated power-tree diagram.**
 
 **Requirements:** KiCad 10.0 or later, on Windows or Linux (a distribution's
 KiCad or the Flatpak from Flathub).
