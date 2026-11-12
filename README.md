@@ -10,7 +10,8 @@ options in your browser, and the results are emailed to you.
 ## Free
 
 1. **Part number checks against the schematic** — passive values, with voltage
-   and current ratings checked against the decoded part number.
+   and current ratings checked against the decoded part number, and life-cycle
+   checks of each part.
 2. **Pull-up / pull-down checks.**
 3. **I2C address identification and checks.**
 4. **Power rail source-to-destination pathing** through jumpers, solder
